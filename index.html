@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Oefenen met formules</title>
+<style>
+  :root{
+    --accent:#1f6feb; --accent2:#ff7a00; --ok:#198754; --bad:#d2342a; --ink:#0b1020;
+    --muted:#5b6472; --bg:#f8fbff; --card:#ffffff; --shadow:0 6px 24px rgba(0,0,0,.08);
+    --radius:18px;
+  }
+  html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;background:linear-gradient(180deg, rgba(31,111,235,.08), rgba(255,122,0,.06)) fixed, var(--bg);color:var(--ink);}
+  .wrap{max-width:1250px;margin:32px auto;padding:0 20px;position:relative;min-height:80vh}
+  header{display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:16px;align-items:center}
+  h1{font-size:clamp(20px,3vw,28px);margin:0}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+  button,.chip,select.top,label.switch,input.text{
+    border:0;border-radius:12px;padding:10px 14px;background:var(--accent);color:#fff;
+    font-weight:600;cursor:pointer;box-shadow:var(--shadow);
+  }
+  .chip{background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff}
+  .badge{border-bottom:3px solid var(--accent2)}
+  .title{border-bottom:3px solid var(--accent)}
+  button.secondary{background:var(--accent2); color:#fff}
+  button.ghost{background:#fff; color:#1b2a55; border:2px solid var(--accent2)}
+  input.text{background:#fff;color:#0b1020;border:1px solid #cbd5e1;min-width:160px}
+  button.secondary{background:#e9eef9;color:#14365d}
+  button.ghost{background:#eef2ff;color:#1b2a55}
+  select.top{background:#eef2ff;color:#1b2a55}
+  .chip{background:#eef2ff;color:#1b2a55}
+  .grid{display:grid;grid-template-columns: 1fr 1fr;gap:18px;align-items:start;}
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;}
+  .title{font-weight:800;font-size:16px;margin-bottom:6px;border-bottom:3px solid #111;padding-bottom:6px;}
+  .block{margin:12px 0 0}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+  label.titlelbl{font-weight:700}
+  select{
+    width:100%;padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fbfcff;
+    font-size:16px;outline:none;appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M7 10l5 5 5-5z" fill="%23667"/></svg>');background-repeat:no-repeat;background-position:right 10px center;
+  }
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .badge{font-weight:800;border-bottom:3px solid #111;display:inline-block;margin-bottom:6px}
+  .formula{font-size:24px;font-weight:800;margin:4px 0 0 0}
+  .feedback{font-size:14px;margin-top:6px}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .question{font-size:18px;margin:0 0 10px 0;color:var(--muted)}
+  .answer{font-size:20px;font-weight:800;text-decoration:underline;margin-top:4px}
+  .footer{margin-top:18px;color:var(--muted);font-size:13px}
+  .sep{height:1px;background:#e6e9f2;margin:10px 0 0}
+  .inline{display:inline-flex;gap:8px;align-items:center}
+  .switch{background:#eef2ff;color:#1b2a55}
+  .tiny{font-size:12px;color:#4d5562;font-weight:700}
+  .credit{position:absolute;right:12px;bottom:8px;font-size:11px;color:#7a8392}
+  .hide{display:none !important;}
+  .zone{display:grid;gap:12px}
+  .checks{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px}
+  .checks label{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dfe5f2;border-radius:12px;padding:8px 10px}
+  .summary{margin-top:14px;border:2px dashed #cbd5e1;border-radius:14px;padding:12px;background:#fbfdff}
+  .summary h3{margin:0 0 8px 0}
+  textarea{width:100%;min-height:90px;border-radius:12px;border:1px solid #cbd5e1;padding:10px 12px;font-size:15px}
+  .timechip{background:#fff;color:#0b1020;border:1px solid #cbd5e1;border-radius:999px;padding:6px 10px;font-weight:700}
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}.checks{grid-template-columns:1fr 1fr}}
+  @media print{
+    .controls, .switch, #export, #new, #reset, #check, #startTest, #endTest, .credit, #printSummary, #newTest {display:none!important}
+    body{background:#fff}
+    .panel{box-shadow:none;border:1px solid #ddd}
+  }
+  /* Print alleen de samenvatting als we de speciale modus aanzetten */
+  @media print {
+    body.only-summary-print *{ display:none !important; }
+    body.only-summary-print #testSummary, body.only-summary-print #testSummary *{ display:initial !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="zone">
+        <h1>Oefenen met formules</h1>
+        <div class="row">
+          <input id="studentName" class="text" placeholder="Naam leerling" />
+          <input id="studentClass" class="text" placeholder="Klas" />
+          <input id="seedInput" class="text" placeholder="Docent-seed (optioneel, bv. 20251105)" />
+          <span class="timechip" id="timer">00:00</span>
+        </div>
+      </div>
+      <div class="controls">
+        <select id="setSelect" class="top" title="Kies formule-set">
+          <option value="density" selected>Dichtheid — ρ = m / V</option>
+          <option value="speed">Snelheid — v = s / t</option>
+          <option value="accel">Versnelling — a = Δv / Δt</option>
+          <option value="force">Kracht — F = m · a</option>
+          <option value="work">Arbeid — W = F · s</option>
+          <option value="weight">Zwaartekracht — Fz = m · g</option>
+          <option value="energy">Energie — E = P · t</option>
+        </select>
+        <select id="variantSelect" class="top" title="Kies welke grootheid gevraagd wordt">
+          <option value="random" selected>Variant: willekeurig</option>
+        </select>
+        <select id="answerUnit" class="top" title="Antwoord-eenheid (per set)">
+          <option value="auto" selected>Antwoord-eenheid: automatisch</option>
+        </select>
+        <label class="switch" style="display:inline-flex;gap:8px;align-items:center;">
+          <input id="toggleSI" type="checkbox" checked style="accent-color:#1f6feb;transform:scale(1.2)"/>
+          <span class="tiny">SI-check verplicht</span>
+        </label>
+        <button id="new">Nieuwe opgave</button>
+        <button id="check" class="secondary">Controleer</button>
+        <button id="reset" class="secondary">Wis selectie</button>
+        <button id="export" class="ghost">Export CSV</button>
+        <span class="chip" id="score">Score: 0/0</span>
+      </div>
+    </header>
+
+    <div class="panel" id="selfTestPanel">
+      <div class="title">Zelftest — vink de formules aan die door elkaar geoefend worden</div>
+      <div class="checks">
+        <label><input type="checkbox" class="setbox" value="density" checked/> ρ = m / V</label>
+        <label><input type="checkbox" class="setbox" value="speed" checked/> v = s / t</label>
+        <label><input type="checkbox" class="setbox" value="accel" checked/> a = Δv / Δt</label>
+        <label><input type="checkbox" class="setbox" value="force" checked/> F = m · a</label>
+        <label><input type="checkbox" class="setbox" value="work" /> W = F · s</label>
+        <label><input type="checkbox" class="setbox" value="weight" /> Fz = m · g</label>
+        <label><input type="checkbox" class="setbox" value="energy" /> E = P · t</label>
+      </div>
+      <div class="row tools">
+        <label class="inline tiny" style="gap:6px">Aantal opgaven:
+          <select id="numProblems" class="top" title="Aantal opgaven">
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+        <button id="startTest">Start zelftest</button>
+        <button id="endTest" class="secondary hide">Stop test</button>
+        <button id="showFeedback" class="ghost hide">Feedback</button>
+        <button id="copySummary" class="ghost hide">Kopieer tekst</button>
+        <button id="newTest" class="ghost hide">Nieuwe test</button>
+      </div>
+      <div class="summary hide" id="testSummary">
+        <div id="autoNarrative" style="font-size:16px;line-height:1.5;margin-bottom:10px;"></div>
+        <h3>Resultaten & Feedback</h3>
+        <div class="row" style="flex-wrap:wrap;gap:14px">
+          <div><strong>Naam:</strong> <span id="sumName">—</span></div>
+          <div><strong>Klas:</strong> <span id="sumClass">—</span></div>
+          <div><strong>Score:</strong> <span id="sumScore">—</span></div>
+          <div><strong>Tijd:</strong> <span id="sumTime">—</span></div>
+          <div><strong>Formules:</strong> <span id="sumSets">—</span></div>
+          <div><strong>Seed:</strong> <span id="sumSeed">—</span></div>
+        </div>
+        <div class="block">
+          <div class="badge">Persoonlijke feedback</div>
+          <textarea id="sumFeedback" placeholder="Schrijf hier je persoonlijke feedback voor de leerling..."></textarea>
+        </div>
+        <div class="block">
+          <div class="badge">Verbeterpunten</div>
+          <textarea id="sumImprove" placeholder="Wat ga je anders doen? Maak een lijstje met 2–3 concrete acties."></textarea>
+        </div>
+        <div class="row tiny" style="opacity:.8">Tip: maak een foto of print dit overzicht en deel via de Teams‑app.</div>
+      
+    <div class="panel">
+      <div class="title">Checklist: volgorde van werken (T-methode)</div>
+      <ol style="margin:6px 0 0 18px; line-height:1.5">
+        <li>Teken met potlood een grote <strong>T</strong> in je werkschrift: zo ontstaan er twee kolommen.</li>
+        <li><strong>Linker kolom:</strong> noteer onder elkaar de <em>gegevens</em> met symbolen én eenheden (bijv. m = … kg, V = … m³). Noteer ook de <em>vraag</em> met symbool en de gevraagde eenheid.</li>
+        <li>Doe de <strong>SI‑check</strong>: staan alle eenheden in SI? Zo niet, reken om. Als er uitdrukkelijk een niet‑SI‑eenheid wordt gevraagd (bijv. km/h, kWh), kies dan passende eenheden die daarbij aansluiten.</li>
+        <li><strong>Rechter kolom:</strong> schrijf de (eventueel omgebouwde) formule op.</li>
+        <li>Vul de waarden met eenheden in de formule in.</li>
+        <li>Reken uit en noteer het <strong>antwoord met de gevraagde eenheid</strong>.</li>
+        <li>Sluit af met het <strong>antwoord in één zin</strong>.</li>
+      </ol>
+    </div>
+</div>
+    </div>
+
+    <div class="panel">
+      <div class="question" id="vraag">—</div>
+      <div class="grid">
+        <!-- Left -->
+        <div class="panel">
+          <div class="title">gegevens / gevraagd / SI-check</div>
+
+          <div class="block">
+            <div class="row"><label class="titlelbl">Gegeven 1:</label></div>
+            <div class="two-col">
+              <select id="g1"></select>
+              <select id="g1si" class="si-field"></select>
+            </div>
+            <div class="feedback" id="fb-g1"></div>
+          </div>
+
+          <div class="block">
+            <div class="row"><label class="titlelbl">Gegeven 2:</label></div>
+            <div class="two-col">
+              <select id="g2"></select>
+              <select id="g2si" class="si-field"></select>
+            </div>
+            <div class="feedback" id="fb-g2"></div>
+          </div>
+
+          <div class="block">
+            <div class="row"><label class="titlelbl">Gevraagd:</label></div>
+            <select id="gevraagd"></select>
+            <div class="feedback" id="fb-gevraagd"></div>
+          </div>
+        </div>
+
+        <!-- Right -->
+        <div class="panel">
+          <div class="title">formule / berekening / antwoord in een zin</div>
+
+          <div class="block">
+            <div class="badge">formule</div>
+            <div class="formula">
+              <select id="formule"></select>
+            </div>
+            <div class="feedback" id="fb-formule"></div>
+          </div>
+
+          <div class="block">
+            <div class="badge">berekening</div>
+            <select id="berekening"></select>
+            <div class="feedback" id="fb-berekening"></div>
+          </div>
+
+          <div class="block">
+            <div class="badge">antwoord in één zin</div>
+            <div class="answer">
+              <select id="antwoord"></select>
+            </div>
+            <div class="feedback" id="fb-antwoord"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Doel: dwing de notatie af. SI-check kan uit via de schakelaar. Antwoord‑eenheid is instelbaar (m/s of km/h; J of kWh; kg/m³ of g/cm³; J of kJ).
+        <div class="sep"></div>
+        <div class="small">Beschikbare sets: ρ=m/V, v=s/t, a=Δv/Δt, F=m·a, W=F·s, Fz=m·g (g≈9,81 m/s²), E=P·t.</div>
+      </div>
+    </div>
+
+    <div class="credit">Gemaakt door C.A. Elsman.</div>
+  </div>
+
+<script>
+// ---------- RNG met seed (mulberry32) ----------
+let currentRng = Math.random;
+function mulberry32(a){return function(){var t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
+function setSeed(seedStr){
+  const n = parseInt(seedStr,10);
+  if(!isNaN(n)){ currentRng = mulberry32(n); }
+  else { currentRng = Math.random; }
+}
+function rand(){ return currentRng(); }
+
+const fmt = (x) => String(x).replace('.',',');
+const scoreEl = document.getElementById('score');
+const vraagEl = document.getElementById('vraag');
+const setSelect = document.getElementById('setSelect');
+const variantSelect = document.getElementById('variantSelect');
+const answerUnit = document.getElementById('answerUnit');
+const toggleSI = document.getElementById('toggleSI');
+const exportBtn = document.getElementById('export');
+
+const studentName = document.getElementById('studentName');
+const studentClass = document.getElementById('studentClass');
+const seedInput = document.getElementById('seedInput');
+const timerEl = document.getElementById('timer');
+
+const startTestBtn = document.getElementById('startTest');
+const numProblemsSelect = document.getElementById('numProblems');
+const endTestBtn = document.getElementById('endTest');
+const showFeedbackBtn = document.getElementById('showFeedback');
+const copySummaryBtn = document.getElementById('copySummary');
+const newTestBtn = document.getElementById('newTest');
+
+const testSummary = document.getElementById('testSummary');
+const sumName = document.getElementById('sumName');
+const sumClass = document.getElementById('sumClass');
+const sumScore = document.getElementById('sumScore');
+const sumTime = document.getElementById('sumTime');
+const sumSets = document.getElementById('sumSets');
+const sumSeed = document.getElementById('sumSeed');
+const sumFeedback = document.getElementById('sumFeedback');
+const sumImprove = document.getElementById('sumImprove');
+
+let attempts = 0, correctCount = 0;
+let errorCounts = {g1:0,g1si:0,g2:0,g2si:0,gev:0,formule:0,berekening:0,antwoord:0};
+let state = { set:'density', unknown:'auto', unit:'auto', correct:{} };
+
+let logRows = []; // CSV
+let testMode = false;
+let testPresented = 0, testCorrect = 0, testBatch = 0;
+let testHistory = [];
+let testTarget = 5;
+let testStart = null, testTimerInterval = null;
+let cachedSetsForBatch = [];
+
+function nowISO(){ return new Date().toISOString(); }
+function randRange(a,b,dec=0){ return +((rand()*(b-a)+a).toFixed(dec)); }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+function option(el, text, value){ const o=document.createElement('option'); o.textContent=text; o.value=value??text; el.appendChild(o); }
+function fillSelect(id, options){ const el = document.getElementById(id); el.innerHTML=''; el.insertAdjacentHTML('afterbegin','<option value="" selected disabled>— kies —</option>'); shuffle(options).forEach(x=>option(el,x,x)); }
+function hideSIFields(hide){ document.querySelectorAll('.si-field').forEach(el=>{ if(hide) el.classList.add('hide'); else el.classList.remove('hide'); }); }
+function addCSVRow(obj){
+  const headers = ['timestamp','naam','klas','set','variant','vraag','g1','g1si','g2','g2si','gevraagd','formule','berekening','antwoord','correct','testmode','testbatch','seed','sets'];
+  if(logRows.length===0) logRows.push(headers);
+  logRows.push(headers.map(h=> (obj[h]??'').toString().replace(/[\r\n]+/g,' ')));
+}
+
+function updateVariantOptions(){
+  variantSelect.innerHTML='';
+  option(variantSelect,'Variant: willekeurig','random');
+  const map = {
+    density:['ρ','m','V'],
+    speed:['v','s','t'],
+    accel:['a','Δv','Δt'],
+    force:['F','m','a'],
+    work:['W','F','s'],
+    weight:['Fz','m','g'],
+    energy:['E','P','t']
+  };
+  (map[state.set]||[]).forEach(k=> option(variantSelect,'Gevraagd: '+k,k));
+  variantSelect.value='random';
+}
+
+function updateAnswerUnits(){
+  answerUnit.innerHTML='';
+  option(answerUnit,'Antwoord-eenheid: automatisch','auto');
+  if(state.set==='speed'){ option(answerUnit,'m/s','m/s'); option(answerUnit,'km/h','km/h'); }
+  else if(state.set==='energy'){ option(answerUnit,'J','J'); option(answerUnit,'kWh','kWh'); }
+  else if(state.set==='force' || state.set==='weight'){ option(answerUnit,'N','N'); option(answerUnit,'kN','kN'); }
+  else if(state.set==='accel'){ option(answerUnit,'m/s²','m/s²'); }
+  else if(state.set==='work'){ option(answerUnit,'J','J'); option(answerUnit,'kJ','kJ'); }
+  else if(state.set==='density'){ option(answerUnit,'kg/m³','kg/m³'); option(answerUnit,'g/cm³','g/cm³'); }
+  answerUnit.value='auto';
+}
+
+setSelect.addEventListener('change', ()=>{
+  state.set = setSelect.value;
+  updateVariantOptions();
+  updateAnswerUnits();
+  newProblem();
+});
+variantSelect.addEventListener('change', newProblem);
+answerUnit.addEventListener('change', ()=>{ state.unit = answerUnit.value; newProblem(); });
+toggleSI.addEventListener('change', ()=>{ hideSIFields(!toggleSI.checked); newProblem(); });
+exportBtn.addEventListener('click', ()=>{
+  if(logRows.length===0){ alert('Nog geen resultaten om te exporteren.'); return; }
+  const csv = logRows.map(r=> r.map(v=> /[",;\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v).join(';')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'oefenapp-resultaten.csv';
+  a.click();
+});
+
+function getCheckedSets(){
+  const boxes = Array.from(document.querySelectorAll('.setbox'));
+  const chosen = boxes.filter(b=>b.checked).map(b=>b.value);
+  return chosen.length? chosen : ['density'];
+}
+function pickSetForTest(){ const chosen = cachedSetsForBatch; return chosen[Math.floor(rand()*chosen.length)]; }
+
+function startTimer(){
+  testStart = new Date();
+  if(testTimerInterval) clearInterval(testTimerInterval);
+  testTimerInterval = setInterval(()=>{
+    const sec = Math.floor((new Date()-testStart)/1000);
+    const mm = String(Math.floor(sec/60)).padStart(2,'0');
+    const ss = String(sec%60).padStart(2,'0');
+    timerEl.textContent = `${mm}:${ss}`;
+  }, 500);
+}
+function stopTimer(){
+  if(testTimerInterval){ clearInterval(testTimerInterval); testTimerInterval=null; }
+  const sec = Math.floor((new Date()-testStart)/1000);
+  const mm = String(Math.floor(sec/60)).padStart(2,'0');
+  const ss = String(sec%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+
+function startSelfTest(){
+  testTarget = parseInt(numProblemsSelect.value,10)||5;
+  // Seed instellen (optioneel)
+  setSeed(seedInput.value.trim());
+  cachedSetsForBatch = getCheckedSets();
+  testMode = true; testPresented = 0; testCorrect = 0; testBatch += 1; resetErrors(); testHistory = [];
+  testSummary.classList.add('hide');
+  startTestBtn.classList.add('hide'); endTestBtn.classList.remove('hide');
+  printSummaryBtn.classList.add('hide'); newTestBtn.classList.add('hide');
+  startTimer();
+  nextTestProblem();
+}
+function stopSelfTest(){ finishTest(false); }
+
+function feedbackFromErrors(){
+  const labels = {
+    g1: 'Gegeven 1 is onjuist overgenomen',
+    g1si: 'SI‑eenheid bij Gegeven 1 is onjuist',
+    g2: 'Gegeven 2 is onjuist overgenomen',
+    g2si: 'SI‑eenheid bij Gegeven 2 is onjuist',
+    gev: 'De vraag (gevraagd) is niet correct genoteerd',
+    formule: 'De (omgebouwde) formule klopt niet',
+    berekening: 'De invulling of rekenstap klopt niet',
+    antwoord: 'De slotzin met antwoord en eenheid ontbreekt of is onjuist'
+  };
+  const tips = {
+    g1: {action:'Neem Gegeven 1 precies over in de linker kolom.',
+         how:'Noteer symbool + getal + eenheid (bijv. m = 5,0 kg).'},
+    g1si:{action:'Controleer de SI‑eenheid bij Gegeven 1.',
+         how:'Zet om naar SI indien nodig (bijv. g → kg, cm³ → m³).'},
+    g2:{action:'Neem Gegeven 2 precies over in de linker kolom.',
+         how:'Kijk of het gegeven past bij de formule (bijv. s en t bij v = s/t).'},
+    g2si:{action:'Controleer de SI‑eenheid bij Gegeven 2.',
+         how:'Maak de SI‑check: alles in SI, tenzij een andere uitkomsteenheid is gevraagd.'},
+    gev:{action:'Noteer de vraag (gevraagd) met symbool en eenheid.',
+         how:'Schrijf “gevraagd: … = ? [eenheid]” in de linker kolom.'},
+    formule:{action:'Zet in de rechter kolom de juiste (omgebouwde) formule.',
+         how:'Werk vanuit de standaardformule en bouw om naar de gevraagde grootheid.'},
+    berekening:{action:'Vul vervolgens de waarden met eenheden in en reken uit.',
+         how:'Schrijf de tussenstap met eenheden en controleer of ze netjes wegvallen.'},
+    antwoord:{action:'Sluit af met een correcte slotzin met antwoord + gevraagde eenheid.',
+         how:'Bijv.: “De snelheid is 12,5 m/s.”'}
+  };
+  const arr = Object.entries(errorCounts).sort((a,b)=> b[1]-a[1]);
+  const top = arr.filter(([,n])=> n>0).slice(0,2);
+  const naam = (studentName.value||'Je');
+  if(top.length===0){
+    return {
+      feedback: `${naam}, knap gedaan: je hebt bijna geen fouten gemaakt. Compliment voor je nauwkeurigheid en nette notatie!`,
+      errorsSentence: `Je maakte nauwelijks fouten.`,
+      complimentSentence: `Heel netjes gewerkt en strak genoteerd.`,
+      improve: `Verbeterpunt: blijf de formule als eerste noteren en controleer de eenheden. Zo pak je dat aan: schrijf steeds eerst de formule en zet daaronder de gegevens in SI.`
+    };
+  }
+  const lines = top.map(([k,n],i)=> `${i+1}) ${labels[k]} (${n}×)`);
+  const main = top[0][0];
+  const act = tips[main].action; const how = tips[main].how;
+  const compliment = 'Mooi dat je consequent de stappen invult — ga zo door!';
+  return {
+    feedback: `${naam}, je twee meestgemaakte fouten waren: ${lines.join('; ')}. Goed gewerkt, je zette grote stappen. ${compliment}`,
+    errorsSentence: `Je twee meestgemaakte fouten waren: ${lines.join('; ')}`,
+    complimentSentence: `${compliment}`,
+    improve: `Verbeterpunt: ${act} Zo pak je dat aan: ${how}`
+  };
+}
+
+function finishTest(natural=true){
+  const elapsed = stopTimer();
+  testMode = false;
+  startTestBtn.classList.remove('hide'); endTestBtn.classList.add('hide');
+  showFeedbackBtn.classList.remove('hide'); copySummaryBtn.classList.remove('hide'); newTestBtn.classList.remove('hide');
+  // summary
+  sumName.textContent = studentName.value || '—';
+  sumClass.textContent = studentClass.value || '—';
+  sumScore.textContent = `${testCorrect} / ${testTarget}`;
+  sumTime.textContent = elapsed;
+  sumSets.textContent = cachedSetsForBatch.join(', ');
+  sumSeed.textContent = seedInput.value.trim() || '—';
+    const auto = feedbackFromErrors();
+  sumFeedback.value = auto.feedback;
+  sumImprove.value = auto.improve;
+  testSummary.classList.remove('hide');
+}
+
+function nextTestProblem(){
+  state.set = pickSetForTest();
+  setSelect.value = state.set;
+  updateVariantOptions();
+  updateAnswerUnits();
+  newProblem();
+}
+
+startTestBtn.addEventListener('click', startSelfTest);
+numProblemsSelect.addEventListener('change', ()=>{
+  testTarget = parseInt(numProblemsSelect.value,10)||5;
+  startTestBtn.textContent = `Start zelftest (${testTarget} opgaven)`;
+});
+// initialize label once
+startTestBtn.textContent = `Start zelftest (${(parseInt(numProblemsSelect.value,10)||5)} opgaven)`;
+endTestBtn.addEventListener('click', stopSelfTest);
+newTestBtn.addEventListener('click', ()=>{
+  testSummary.classList.add('hide');
+  startSelfTest();
+});
+showFeedbackBtn.addEventListener('click', ()=>{
+  testSummary.classList.remove('hide');
+  testSummary.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+copySummaryBtn.addEventListener('click', async ()=>{
+  const naam = (studentName.value||'—');
+  const klas = (studentClass.value||'—');
+  const score = `${testCorrect}/${testPresented}`;
+  const tijd = sumTime.textContent;
+  const sets = sumSets.textContent;
+  const seed = sumSeed.textContent;
+  const narrative = (document.getElementById('autoNarrative')?.textContent||'');
+  const fb = sumFeedback.value;
+  const imp = sumImprove.value;
+  const text = `Naam: ${naam}\nKlas: ${klas}\nScore: ${score}\nTijd: ${tijd}\nFormules: ${sets}\nSeed: ${seed}\n\n${narrative}\n\nPersoonlijke feedback:\n${fb}\n\nVerbeterpunten:\n${imp}`;
+  try{ await navigator.clipboard.writeText(text); alert('Samenvatting gekopieerd.'); }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); alert('Samenvatting gekopieerd.'); } finally { document.body.removeChild(ta); }
+  }
+});
+
+// Utility
+function SIor(value, si, altUnits){
+  const base = [si, ...altUnits];
+  return toggleSI.checked ? [si, ...shuffle(altUnits)] : shuffle(base);
+}
+
+// ----- DICHTHEID -----
+function densityProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['ρ','m','V'])[0] : variantSelect.value;
+  const m = randRange(2,9,1);
+  const V = randRange(0.10,0.75,2);
+  const rho = +(m/V).toFixed(3);
+  const targetUnit = (answerUnit.value==='auto') ? 'kg/m³' : answerUnit.value;
+  const showAsGperCm3 = rand() < 0.4;
+
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+
+  if(unk==='ρ'){
+    given1=`m = ${fmt(m)} kg`; given2=`V = ${fmt(V)} m³`;
+    if(targetUnit==='g/cm³'){
+      const rho_g = (rho/1000).toFixed(3).replace('.',',');
+      asked='ρ = ?   g/cm³'; formulaCorr='ρ = m / V';
+      calcCorr=`ρ = ${fmt(m)} kg / ${fmt(V)} m³ = ${rho_g} g/cm³`;
+      answerCorr=`De dichtheid is ${rho_g} g/cm³`;
+    } else {
+      asked='ρ = ?   kg/m³'; formulaCorr='ρ = m / V';
+      calcCorr=`ρ = ${fmt(m)} kg / ${fmt(V)} m³ = ${fmt(rho)} kg/m³`;
+      answerCorr=`De dichtheid is ${fmt(rho)} kg/m³`;
+    }
+  } else if(unk==='m'){
+    const rhoStr = showAsGperCm3 ? `${(rho/1000).toFixed(3).replace('.',',')} g/cm³` : `${fmt(rho)} kg/m³`;
+    given1=`ρ = ${rhoStr}`; given2=`V = ${fmt(V)} m³`; asked='m = ?   kg';
+    formulaCorr='m = ρ · V';
+    calcCorr=`m = ${rhoStr} · ${fmt(V)} m³ = ${fmt(m.toFixed(1))} kg`;
+    answerCorr=`De massa is ${fmt(m.toFixed(1))} kg`;
+  } else {
+    const rhoStr = showAsGperCm3 ? `${(rho/1000).toFixed(3).replace('.',',')} g/cm³` : `${fmt(rho)} kg/m³`;
+    given1=`m = ${fmt(m)} kg`; given2=`ρ = ${rhoStr}`; asked='V = ?   m³';
+    formulaCorr='V = m / ρ';
+    calcCorr=`V = ${fmt(m)} kg / ${rhoStr} = ${fmt(V.toFixed(2))} m³`;
+    answerCorr=`Het volume is ${fmt(V.toFixed(2))} m³`;
+  }
+  const si1 = given1.includes('kg/m³')? 'kg/m³' : (given1.includes('kg')? 'kg' : (given1.includes('g/cm³')?'g/cm³':'m³'));
+  const si2 = given2.includes('kg/m³')? 'kg/m³' : (given2.includes('kg')? 'kg' : (given2.includes('g/cm³')?'g/cm³':'m³'));
+  const g1opts = shuffle([given1, given1.replace('kg','N'), given1.replace('m³','cm³')]);
+  const g2opts = shuffle([given2, given2.replace('kg','N'), given2.replace('kg/m³','g/cm³').replace('g/cm³','kg/m³')]);
+  const g1si = SIor(si1, si1, ['g','N','cm³','L','g/cm³','kg/m³']);
+  const g2si = SIor(si2, si2, ['g','N','cm³','L','g/cm³','kg/m³']);
+  const gevOpts = shuffle([asked,'ρ = ?   kg/m³','ρ = ?   g/cm³','m = ?   kg','V = ?   m³']);
+  const formOpts = shuffle(['ρ = m / V','ρ = V / m','ρ = m · V','m = ρ / V','V = ρ · m']);
+  const calcKg = `ρ = ${fmt(m)} kg / ${fmt(V)} m³ = ${fmt(rho)} kg/m³`;
+  const calcG  = `ρ = ${fmt(m)} kg / ${fmt(V)} m³ = ${fmt((rho/1000).toFixed(3).replace('.',','))} g/cm³`;
+  const berOpts = shuffle([calcCorr, calcKg, calcG]);
+  const antOpts = shuffle([answerCorr]);
+
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`,
+    g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:'ρ = m / V',berekening:calcCorr,antwoord:answerCorr}
+  };
+}
+
+// ----- SNELHEID -----
+function speedProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['v','s','t'])[0] : variantSelect.value;
+  const v_ms = randRange(2,30,0);
+  const v_kmh = +(v_ms*3.6).toFixed(1);
+  const t = randRange(3,40,0);
+  const s = +(v_ms*t).toFixed(0);
+
+  const targetUnit = (answerUnit.value==='auto') ? 'm/s' : answerUnit.value;
+  const giveAsKmh = rand() < 0.5;
+
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='v'){
+    given1=`s = ${s} m`; given2=`t = ${t} s`; asked = (targetUnit==='km/h') ? 'v = ?   km/h' : 'v = ?   m/s';
+    formulaCorr='v = s / t';
+    const vms = (s/t), vkmh = vms*3.6;
+    if(targetUnit==='km/h'){
+      calcCorr=`v = ${s} m / ${t} s = ${fmt(vkmh.toFixed(2))} km/h`; answerCorr=`De snelheid is ${fmt(vkmh.toFixed(2))} km/h`;
+    } else {
+      calcCorr=`v = ${s} m / ${t} s = ${fmt(vms.toFixed(2))} m/s`;   answerCorr=`De snelheid is ${fmt(vms.toFixed(2))} m/s`;
+    }
+  } else if(unk==='s'){
+    const vGivenText = giveAsKmh ? `v = ${fmt(v_kmh)} km/h` : `v = ${v_ms} m/s`;
+    given1=vGivenText; given2=`t = ${t} s`; asked='s = ?   m';
+    formulaCorr='s = v · t';
+    const res = (v_ms*t).toFixed(0);
+    const calcDirect = `s = ${v_ms} m/s · ${t} s = ${res} m`;
+    const calcConvert = `s = ${fmt(v_kmh)} km/h ÷ 3,6 · ${t} s = ${res} m`;
+    calcCorr = giveAsKmh ? calcConvert : calcDirect;
+    answerCorr=`De afstand is ${res} m`;
+  } else {
+    const vGivenText = giveAsKmh ? `v = ${fmt(v_kmh)} km/h` : `v = ${v_ms} m/s`;
+    given1=`s = ${s} m`; given2=vGivenText; asked='t = ?   s';
+    formulaCorr='t = s / v';
+    const res = (s/v_ms).toFixed(2).replace('.',',');
+    const calcDirect = `t = ${s} m / ${v_ms} m/s = ${res} s`;
+    const calcConvert = `t = ${s} m / (${fmt(v_kmh)} km/h ÷ 3,6) = ${res} s`;
+    calcCorr = giveAsKmh ? calcConvert : calcDirect;
+    answerCorr=`De tijd is ${res} s`;
+  }
+
+  const si1 = given1.includes('m/s')? 'm/s' : (given1.includes(' m')? 'm' : 's');
+  const si2 = given2.includes('m/s')? 'm/s' : (given2.includes(' m')? 'm' : 's');
+  const g1opts = shuffle([given1, given1.replace('m/s','km/h')]);
+  const g2opts = shuffle([given2, given2.replace('m/s','km/h')]);
+  const g1si = SIor(si1, si1, ['km/h','cm','min']);
+  const g2si = SIor(si2, si2, ['km/h','cm','min']);
+
+  const vmsCalc = `v = ${s} m / ${t} s = ${fmt((s/t).toFixed(2))} m/s`;
+  const vkmhCalc = `v = ${s} m / ${t} s = ${fmt(((s/t)*3.6).toFixed(2))} km/h`;
+  const gevOpts = shuffle([asked,'v = ?   m/s','v = ?   km/h','s = ?   m','t = ?   s']);
+  const formOpts = shuffle([formulaCorr,'v = t / s','s = v / t']);
+  const berOpts = shuffle([calcCorr, vmsCalc, vkmhCalc]);
+  const antOpts = shuffle([answerCorr, `De snelheid is ${fmt((s/t).toFixed(2))} m/s`, `De snelheid is ${fmt(((s/t)*3.6).toFixed(2))} km/h`]);
+
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`,
+    g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr}
+  };
+}
+
+// ----- a = Δv/Δt -----
+function accelProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['a','Δv','Δt'])[0] : variantSelect.value;
+  const dv = randRange(2,25,0); const dt = randRange(2,10,0); const a = +(dv/dt).toFixed(2);
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='a'){
+    given1=`Δv = ${dv} m/s`; given2=`Δt = ${dt} s`; asked='a = ?   m/s²';
+    formulaCorr='a = Δv / Δt'; calcCorr=`a = ${dv} m/s / ${dt} s = ${fmt(a.toFixed(2))} m/s²`; answerCorr=`De versnelling is ${fmt(a.toFixed(2))} m/s²`;
+  } else if(unk==='Δv'){
+    given1=`a = ${fmt(a.toFixed(2))} m/s²`; given2=`Δt = ${dt} s`; asked='Δv = ?   m/s';
+    formulaCorr='Δv = a · Δt'; const res = (a*dt).toFixed(2).replace('.',',');
+    calcCorr=`Δv = ${fmt(a.toFixed(2))} m/s² · ${dt} s = ${res} m/s`; answerCorr=`De snelheidsverandering is ${res} m/s`;
+  } else {
+    given1=`Δv = ${dv} m/s`; given2=`a = ${fmt(a.toFixed(2))} m/s²`; asked='Δt = ?   s';
+    formulaCorr='Δt = Δv / a'; const res = (dv/a).toFixed(2).replace('.',',');
+    calcCorr=`Δt = ${dv} m/s / ${fmt(a.toFixed(2))} m/s² = ${res} s`; answerCorr=`De tijd is ${res} s`;
+  }
+  const si1 = given1.includes('m/s²')? 'm/s²' : (given1.includes('m/s')? 'm/s' : 's');
+  const si2 = given2.includes('m/s²')? 'm/s²' : (given2.includes('m/s')? 'm/s' : 's');
+  const g1opts = shuffle([given1, given1.replace('m/s²','km/h²'), given1.replace('m/s','km/h')]);
+  const g2opts = shuffle([given2, given2.replace('m/s²','km/h²'), given2.replace('m/s','km/h')]);
+  const g1si = SIor(si1, si1, ['km/h','km/h²','min']); const g2si = SIor(si2, si2, ['km/h','km/h²','min']);
+  const gevOpts = shuffle([asked,'a = ?   m/s²','Δv = ?   m/s','Δt = ?   s']); const formOpts = shuffle([formulaCorr,'a = Δt / Δv','Δv = a / Δt']);
+  const berOpts = shuffle([calcCorr, calcCorr.replace('/','·')]); const antOpts = shuffle([answerCorr]);
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`,
+    g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr} };
+}
+
+// ----- F = m·a -----
+function forceProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['F','m','a'])[0] : variantSelect.value;
+  const m = randRange(2,50,0); const a = randRange(1,8,1); const F = +(m*a).toFixed(0);
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='F'){ given1=`m = ${m} kg`; given2=`a = ${a} m/s²`; asked='F = ?   N'; formulaCorr='F = m · a'; calcCorr=`F = ${m} kg · ${a} m/s² = ${F} N`; answerCorr=`De kracht is ${F} N`; }
+  else if(unk==='m'){ given1=`F = ${F} N`; given2=`a = ${a} m/s²`; asked='m = ?   kg'; formulaCorr='m = F / a'; const res = (F/a).toFixed(0); calcCorr=`m = ${F} N / ${a} m/s² = ${res} kg`; answerCorr=`De massa is ${res} kg`; }
+  else { given1=`F = ${F} N`; given2=`m = ${m} kg`; asked='a = ?   m/s²'; formulaCorr='a = F / m'; const res = (F/m).toFixed(2).replace('.',','); calcCorr=`a = ${F} N / ${m} kg = ${res} m/s²`; answerCorr=`De versnelling is ${res} m/s²`; }
+  const si1 = given1.includes('N')? 'N' : (given1.includes('kg')? 'kg' : 'm/s²'); const si2 = given2.includes('N')? 'N' : (given2.includes('kg')? 'kg' : 'm/s²');
+  const g1opts = shuffle([given1, given1.replace('N','kN'), given1.replace('kg','g')]); const g2opts = shuffle([given2, given2.replace('N','kN'), given2.replace('kg','g')]);
+  const g1si = SIor(si1, si1, ['kN','g']); const g2si = SIor(si2, si2, ['kN','g']); const gevOpts = shuffle([asked,'F = ?   N','m = ?   kg','a = ?   m/s²']);
+  const formOpts = shuffle([formulaCorr,'F = m / a','m = F · a','a = F · m']); const berOpts = shuffle([calcCorr, calcCorr.replace('N','kN')]); const antOpts = shuffle([answerCorr]);
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`, g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr} };
+}
+
+// ----- W = F·s -----
+function workProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['W','F','s'])[0] : variantSelect.value;
+  const F = randRange(10,500,0); const s = randRange(1,20,0); const W = F*s;
+  const targetUnit = (answerUnit.value==='auto') ? 'J' : answerUnit.value;
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='W'){
+    given1=`F = ${F} N`; given2=`s = ${s} m`; asked = (targetUnit==='kJ')?'W = ?   kJ':'W = ?   J'; formulaCorr='W = F · s';
+    if(targetUnit==='kJ'){ const res=(W/1000).toFixed(2).replace('.',','); calcCorr=`W = ${F} N · ${s} m = ${res} kJ`; answerCorr=`De arbeid is ${res} kJ`; }
+    else { const res=W.toFixed(0); calcCorr=`W = ${F} N · ${s} m = ${res} J`; answerCorr=`De arbeid is ${res} J`; }
+  } else if(unk==='F'){ given1=`W = ${W} J`; given2=`s = ${s} m`; asked='F = ?   N'; formulaCorr='F = W / s'; const res=(W/s).toFixed(0); calcCorr=`F = ${W} J / ${s} m = ${res} N`; answerCorr=`De kracht is ${res} N`; }
+  else { given1=`W = ${W} J`; given2=`F = ${F} N`; asked='s = ?   m'; formulaCorr='s = W / F'; const res=(W/F).toFixed(0); calcCorr=`s = ${W} J / ${F} N = ${res} m`; answerCorr=`De verplaatsing is ${res} m`; }
+  const si1 = given1.includes('J')? 'J' : (given1.includes('N')? 'N' : 'm'); const si2 = given2.includes('J')? 'J' : (given2.includes('N')? 'N' : 'm');
+  const g1opts=shuffle([given1, given1.replace('J','kJ'), given1.replace('N','kN')]); const g2opts=shuffle([given2, given2.replace('J','kJ'), given2.replace('N','kN')]);
+  const g1si = SIor(si1, si1, ['kJ','kN']); const g2si = SIor(si2, si2, ['kJ','kN']); const gevOpts=shuffle([asked,'W = ?   J','W = ?   kJ','F = ?   N','s = ?   m']);
+  const formOpts=shuffle([formulaCorr,'W = F / s','F = W · s']); const berOpts=shuffle([calcCorr, calcCorr.replace('J','kJ')]); const antOpts=shuffle([answerCorr]);
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`, g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr} };
+}
+
+// ----- Fz = m·g -----
+function weightProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['Fz','m','g'])[0] : variantSelect.value;
+  const m = randRange(10,120,0); const g = 9.81; const Fz = +(m*g).toFixed(0);
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='Fz'){ given1=`m = ${m} kg`; given2=`g = 9,81 m/s²`; asked='Fz = ?   N'; formulaCorr='Fz = m · g'; calcCorr=`Fz = ${m} kg · 9,81 m/s² = ${Fz} N`; answerCorr=`De zwaartekracht is ${Fz} N`; }
+  else if(unk==='m'){ given1=`Fz = ${Fz} N`; given2=`g = 9,81 m/s²`; asked='m = ?   kg'; formulaCorr='m = Fz / g'; const res=(Fz/g).toFixed(0); calcCorr=`m = ${Fz} N / 9,81 m/s² = ${res} kg`; answerCorr=`De massa is ${res} kg`; }
+  else { given1=`Fz = ${Fz} N`; given2=`m = ${m} kg`; asked='g = ?   m/s²'; formulaCorr='g = Fz / m'; const res=(Fz/m).toFixed(2).replace('.',','); calcCorr=`g = ${Fz} N / ${m} kg = ${res} m/s²`; answerCorr=`De valversnelling is ${res} m/s²`; }
+  const si1=given1.includes('N')?'N':(given1.includes('kg')?'kg':'m/s²'); const si2=given2.includes('N')?'N':(given2.includes('kg')?'kg':'m/s²');
+  const g1opts=shuffle([given1, given1.replace('N','kN'), given1.replace('kg','g')]); const g2opts=shuffle([given2, given2.replace('N','kN'), given2.replace('kg','g')]);
+  const g1si = SIor(si1, si1, ['kN','g']); const g2si = SIor(si2, si2, ['kN','g']); const gevOpts=shuffle([asked,'Fz = ?   N','m = ?   kg','g = ?   m/s²']);
+  const formOpts=shuffle([formulaCorr,'Fz = m / g']); const berOpts=shuffle([calcCorr, calcCorr.replace('N','kN')]); const antOpts=shuffle([answerCorr]);
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`, g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr} };
+}
+
+// ----- E = P·t -----
+function energyProblem(){
+  const unk = (variantSelect.value==='random') ? shuffle(['E','P','t'])[0] : variantSelect.value;
+  const P = randRange(100,2000,0); const t = randRange(10,600,0);
+  const E_J = P*t; const E_kWh = E_J/3.6e6;
+  const targetUnit = (answerUnit.value==='auto') ? 'J' : answerUnit.value;
+  let given1,given2,asked,formulaCorr,calcCorr,answerCorr;
+  if(unk==='E'){
+    given1=`P = ${P} W`; given2=`t = ${t} s`; asked=(targetUnit==='kWh')?'E = ?   kWh':'E = ?   J'; formulaCorr='E = P · t';
+    if(targetUnit==='kWh'){ const res=E_kWh.toFixed(4).replace('.',','); calcCorr=`E = ${P} W · ${t} s = ${res} kWh`; answerCorr=`De energie is ${res} kWh`; }
+    else { const res=E_J.toFixed(0); calcCorr=`E = ${P} W · ${t} s = ${res} J`; answerCorr=`De energie is ${res} J`; }
+  } else if(unk==='P'){ given1=`E = ${E_J} J`; given2=`t = ${t} s`; asked='P = ?   W'; formulaCorr='P = E / t'; const res=(E_J/t).toFixed(0); calcCorr=`P = ${E_J} J / ${t} s = ${res} W`; answerCorr=`Het vermogen is ${res} W`; }
+  else { given1=`E = ${E_J} J`; given2=`P = ${P} W`; asked='t = ?   s'; formulaCorr='t = E / P'; const res=(E_J/P).toFixed(0); calcCorr=`t = ${E_J} J / ${P} W = ${res} s`; answerCorr=`De tijd is ${res} s`; }
+  const si1=given1.includes('W')?'W':(given1.includes('J')?'J':'s'); const si2=given2.includes('W')?'W':(given2.includes('J')?'J':'s');
+  const g1opts=shuffle([given1, given1.replace('W','kW'), given1.replace('J','kWh')]); const g2opts=shuffle([given2, given2.replace('W','kW'), given2.replace('J','kWh')]);
+  const g1si=SIor(si1, si1, ['kW','kWh']); const g2si=SIor(si2, si2, ['kW','kWh']); const gevOpts=shuffle([asked,'E = ?   J','E = ?   kWh','P = ?   W','t = ?   s']);
+  const formOpts=shuffle([formulaCorr,'E = P / t','P = E · t']); const berOpts=shuffle([calcCorr, calcCorr.replace('J','kWh')]); const antOpts=shuffle([answerCorr]);
+  return { statement:`Gegeven: ${given1} en ${given2}. Bereken ${asked.split('=')[0].trim()}.`, g1opts,g2opts,g1si,g2si,gevOpts,formOpts,berOpts,antOpts,
+    correct:{g1:given1,g1si:si1,g2:given2,g2si:si2,gev:asked,formule:formulaCorr,berekening:calcCorr,antwoord:answerCorr} };
+}
+
+function buildProblem(){
+  const set = state.set;
+  switch(set){
+    case 'density': return densityProblem();
+    case 'speed': return speedProblem();
+    case 'accel': return accelProblem();
+    case 'force': return forceProblem();
+    case 'work': return workProblem();
+    case 'weight': return weightProblem();
+    case 'energy': return energyProblem();
+    default: return densityProblem();
+  }
+}
+
+function newProblem(){
+  const data = buildProblem();
+  state.correct = data.correct;
+  vraagEl.textContent = data.statement;
+  fillSelect('g1', data.g1opts);
+  fillSelect('g1si', data.g1si || ['—']);
+  fillSelect('g2', data.g2opts);
+  fillSelect('g2si', data.g2si || ['—']);
+  fillSelect('gevraagd', data.gevOpts);
+  fillSelect('formule', data.formOpts);
+  fillSelect('berekening', data.berOpts);
+  fillSelect('antwoord', data.antOpts);
+  ['fb-g1','fb-g2','fb-gevraagd','fb-formule','fb-berekening','fb-antwoord'].forEach(id=>document.getElementById(id).textContent='');
+  hideSIFields(!toggleSI.checked);
+}
+
+function inc(key){ errorCounts[key] = (errorCounts[key]||0)+1; }
+function resetErrors(){ Object.keys(errorCounts).forEach(k=> errorCounts[k]=0); }
+
+function check(){
+  attempts++;
+  function fb(id, ok, tip){ document.getElementById(id).innerHTML = ok ? `<span class="ok">✔</span>` : `<span class="bad">✖ ${tip}</span>`; }
+  const c = state.correct;
+  const ok1  = document.getElementById('g1').value === c.g1; if(!ok1) inc('g1');
+  const ok1s = toggleSI.checked ? (document.getElementById('g1si').value === c.g1si) : true; if(!ok1s && toggleSI.checked) inc('g1si');
+  fb('fb-g1', ok1 && ok1s, `Kies: “${c.g1}”${toggleSI.checked?` met SI “${c.g1si}”`:''}.`);
+
+  const ok2  = document.getElementById('g2').value === c.g2; if(!ok2) inc('g2');
+  const ok2s = toggleSI.checked ? (document.getElementById('g2si').value === c.g2si) : true; if(!ok2s && toggleSI.checked) inc('g2si');
+  fb('fb-g2', ok2 && ok2s, `Kies: “${c.g2}”${toggleSI.checked?` met SI “${c.g2si}”`:''}.`);
+
+  const okG = document.getElementById('gevraagd').value === c.gev; if(!okG) inc('gev'); fb('fb-gevraagd', okG, `Gevraagd: “${c.gev}”.`);
+  const okF = document.getElementById('formule').value === c.formule; if(!okF) inc('formule'); fb('fb-formule', okF, `Formule: “${c.formule}”.`);
+  const okB = document.getElementById('berekening').value === c.berekening; if(!okB) inc('berekening'); fb('fb-berekening', okB, `Berekening: “${c.berekening}”.`);
+  const okA = document.getElementById('antwoord').value === c.antwoord; if(!okA) inc('antwoord'); fb('fb-antwoord', okA, `Antwoord: “${c.antwoord}”.`);
+
+  const allOk = ok1 && ok1s && ok2 && ok2s && okG && okF && okB && okA;
+  if(allOk) correctCount++;
+  scoreEl.textContent = `Score: ${correctCount}/${attempts}`;
+
+  const chosenSets = cachedSetsForBatch.join(',');
+  // CSV log
+  addCSVRow({
+    timestamp: nowISO(), naam: studentName.value, klas: studentClass.value,
+    set: setSelect.value, variant: variantSelect.value, vraag: vraagEl.textContent,
+    g1: document.getElementById('g1').value, g1si: toggleSI.checked ? document.getElementById('g1si').value : '(uit)',
+    g2: document.getElementById('g2').value, g2si: toggleSI.checked ? document.getElementById('g2si').value : '(uit)',
+    gevraagd: document.getElementById('gevraagd').value, formule: document.getElementById('formule').value,
+    berekening: document.getElementById('berekening').value, antwoord: document.getElementById('antwoord').value,
+    correct: allOk ? 'ja' : 'nee', testmode: testMode ? 'ja' : 'nee', testbatch: testMode ? String(testBatch) : '', seed: seedInput.value.trim(), sets: chosenSets
+  });
+
+  if(testMode){
+    if(allOk) testCorrect++;
+    testHistory.push(allOk ? 1 : 0);
+    testPresented++;
+    if(testPresented>=testTarget){
+      finishTest(true);
+    } else {
+      nextTestProblem();
+    }
+  }
+}
+
+document.getElementById('new').addEventListener('click', ()=>{
+  if(testMode){ nextTestProblem(); } else { newProblem(); }
+});
+document.getElementById('check').addEventListener('click', check);
+document.getElementById('reset').addEventListener('click', newProblem);
+
+// init
+function initUI(){
+  setSeed(''); // default
+  state.set = setSelect.value;
+  updateVariantOptions();
+  updateAnswerUnits();
+  hideSIFields(!toggleSI.checked);
+  newProblem();
+}
+initUI();
+</script>
+</body>
+</html>
